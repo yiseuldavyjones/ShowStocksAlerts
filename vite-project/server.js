@@ -1,12 +1,21 @@
 import 'dotenv/config'
 import express from 'express'
 import YahooFinance from 'yahoo-finance2'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const yf  = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 const app = express()
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 
 app.use(express.json())
+
+// ── 프로덕션: Vite 빌드 정적 파일 서빙 ──
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(join(__dirname, 'dist')))
+}
 
 // ── 주가 조회 ──
 app.get('/api/quotes', async (req, res) => {
@@ -38,6 +47,13 @@ app.get('/api/quotes', async (req, res) => {
 
   res.json(results)
 })
+
+// ── 프로덕션: SPA 라우팅 폴백 ──
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (_req, res) => {
+    res.sendFile(join(__dirname, 'dist', 'index.html'))
+  })
+}
 
 app.listen(PORT, () => {
   console.log(`API 서버 실행 중: http://localhost:${PORT}`)

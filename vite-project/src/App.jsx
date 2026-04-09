@@ -228,7 +228,7 @@ export default function App() {
         <div className="header-logo">
           <span className="logo-bold">Stock</span>
           <span className="logo-light">Alerts</span>
-          <span className="logo-tag">전일 종가 대비 모니터</span>
+          <span className="logo-tag">주식 전일 종가 대비 알림</span>
         </div>
         <div className="header-controls">
           <label className="control-label">

@@ -1,0 +1,499 @@
+/* ─── 변수 ────────────────────────────────────────── */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --border: #e8edf2;
+  --border-light: #f0f3f7;
+
+  --text: #171c29;
+  --text-sub: #6b7684;
+  --text-muted: #adb5bd;
+
+  --up: #1060c9;
+  --down: #d92b3a;
+  --flat: #adb5bd;
+
+  --low-color: #e68a00;
+  --low-bg: #fff8ec;
+  --low-border: #ffd580;
+
+  --mid-color: #c45500;
+  --mid-bg: #fff3ec;
+  --mid-border: #ffb380;
+
+  --high-color: #d92b3a;
+  --high-bg: #fff0f1;
+  --high-border: #ffb3b8;
+
+  --accent: #003cff;
+  --accent-light: #e8eeff;
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --radius: 8px;
+}
+
+/* ─── 앱 전체 ────────────────────────────────────── */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/* ─── 헤더 ──────────────────────────────────────── */
+.app-header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.logo-bold {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+
+.logo-light {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.logo-tag {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+  font-weight: 400;
+  border-left: 1px solid var(--border);
+  padding-left: 0.5rem;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+}
+
+select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+}
+select:focus { border-color: var(--accent); }
+
+/* ─── 버튼 ──────────────────────────────────────── */
+.btn {
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) { opacity: 0.85; }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { background: var(--bg); }
+
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+
+/* ─── 본문 ──────────────────────────────────────── */
+.app-body {
+  flex: 1;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ─── 배너 ──────────────────────────────────────── */
+.banner-error,
+.banner-warn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+}
+
+.banner-error {
+  background: var(--high-bg);
+  border: 1px solid var(--high-border);
+  color: var(--high-color);
+}
+
+.banner-error button {
+  background: none;
+  border: none;
+  color: var(--high-color);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.25rem;
+}
+
+.banner-warn {
+  background: var(--low-bg);
+  border: 1px solid var(--low-border);
+  color: var(--low-color);
+}
+
+/* ─── 요약 카드 3개 ──────────────────────────────── */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sc-label {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  font-weight: 500;
+}
+
+.sc-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+}
+.sc-value.alert-active { color: var(--high-color); }
+
+.sc-unit {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-sub);
+  margin-left: 0.2rem;
+}
+
+.sc-bar-wrap {
+  display: flex;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 1px;
+  margin: 0.3rem 0;
+}
+
+.sc-bar { min-width: 4px; border-radius: 2px; transition: flex 0.5s; }
+.sc-bar.up   { background: var(--up); }
+.sc-bar.down { background: var(--down); }
+.sc-bar.flat { background: var(--flat); }
+
+.sc-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.up-text   { color: var(--up);   font-weight: 600; }
+.down-text { color: var(--down); font-weight: 600; }
+
+/* 임계값 알약 */
+.threshold-pills {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.3rem 0;
+}
+
+.pill {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.pill.low  { background: var(--low-bg);  color: var(--low-color);  border: 1px solid var(--low-border); }
+.pill.mid  { background: var(--mid-bg);  color: var(--mid-color);  border: 1px solid var(--mid-border); }
+.pill.high { background: var(--high-bg); color: var(--high-color); border: 1px solid var(--high-border); }
+
+/* ─── 섹션 카드 ──────────────────────────────────── */
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
+
+.leg-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.25rem;
+}
+.leg-dot.low  { background: var(--low-color); }
+.leg-dot.mid  { background: var(--mid-color); }
+.leg-dot.high { background: var(--high-color); }
+
+/* ─── 종목 추가 폼 ──────────────────────────────── */
+.add-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  flex-wrap: wrap;
+}
+
+.form-input {
+  flex: 1;
+  min-width: 150px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-input:focus { border-color: var(--accent); background: #fff; }
+.form-input::placeholder { color: var(--text-muted); }
+
+/* ─── 테이블 ─────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.stock-table thead tr {
+  background: var(--border-light);
+}
+
+.stock-table th {
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.stock-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.stock-row:last-child td { border-bottom: none; }
+
+.stock-row:hover td { background: #fafbfc; }
+
+/* 알림 레벨별 행 강조 */
+.stock-row.row-low  td:first-child { border-left: 3px solid var(--low-color); }
+.stock-row.row-mid  td:first-child { border-left: 3px solid var(--mid-color); }
+.stock-row.row-high td:first-child { border-left: 3px solid var(--high-color); }
+
+/* 컬럼 정렬 */
+th.col-price, th.col-change, th.col-pct, th.col-prev,
+td.col-price, td.col-change, td.col-pct, td.col-prev {
+  text-align: right;
+}
+th.col-del, td.col-del { text-align: center; width: 36px; }
+th.col-alert, td.col-alert { text-align: center; }
+
+/* 종목명 */
+.sym-text {
+  display: block;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88rem;
+}
+.sym-name {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-top: 1px;
+}
+
+/* 숫자 */
+.num { font-variant-numeric: tabular-nums; }
+.up   { color: var(--up); }
+.down { color: var(--down); }
+.muted { color: var(--text-muted); }
+.small { font-size: 0.78rem; }
+.currency { font-size: 0.72rem; color: var(--text-muted); }
+
+/* 등락률 배지 */
+.pct-badge {
+  display: inline-block;
+  padding: 0.18rem 0.55rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.pct-badge.up   { background: #e8f0fd; color: var(--up); }
+.pct-badge.down { background: #fdeaea; color: var(--down); }
+
+/* 알림 칩 */
+.alert-chip {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.alert-chip.low  { background: var(--low-bg);  color: var(--low-color);  border: 1px solid var(--low-border); }
+.alert-chip.mid  { background: var(--mid-bg);  color: var(--mid-color);  border: 1px solid var(--mid-border); }
+.alert-chip.high { background: var(--high-bg); color: var(--high-color); border: 1px solid var(--high-border); }
+
+/* 삭제 버튼 */
+.del-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+.del-btn:hover { color: var(--down); border-color: var(--high-border); background: var(--high-bg); }
+
+/* 빈 상태 */
+.empty-msg {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2.5rem;
+  font-size: 0.85rem;
+}
+
+/* ─── 푸터 ──────────────────────────────────────── */
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ─── 반응형 ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .app-header { padding: 0 1rem; }
+  .logo-tag { display: none; }
+  .app-body { padding: 1rem 0.75rem; }
+  .summary-row { grid-template-columns: 1fr; }
+  .section-header { padding: 0.875rem 1rem 0.65rem; }
+  .add-form { padding: 0.875rem 1rem; }
+  .stock-table th, .stock-table td { padding: 0.6rem 0.75rem; }
+  .col-prev { display: none; }
+}
+
+@media (max-width: 480px) {
+  .col-change { display: none; }
+  .summary-row { grid-template-columns: 1fr 1fr; }
+  .summary-row .summary-card:last-child { grid-column: 1 / -1; }
+}

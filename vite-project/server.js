@@ -1,10 +1,14 @@
+import 'dotenv/config'
 import express from 'express'
 import YahooFinance from 'yahoo-finance2'
 
-const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+const yf  = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 const app = express()
 const PORT = 3001
 
+app.use(express.json())
+
+// ── 주가 조회 ──
 app.get('/api/quotes', async (req, res) => {
   const { symbols } = req.query
   if (!symbols) return res.status(400).json({ error: 'symbols 파라미터 필요' })
@@ -17,14 +21,14 @@ app.get('/api/quotes', async (req, res) => {
       try {
         const q = await yf.quote(symbol)
         results[symbol] = {
-          price: q.regularMarketPrice,
-          prevClose: q.regularMarketPreviousClose,
-          change: q.regularMarketChange,
+          price:         q.regularMarketPrice,
+          prevClose:     q.regularMarketPreviousClose,
+          change:        q.regularMarketChange,
           changePercent: q.regularMarketChangePercent,
-          marketName: q.shortName || q.longName || symbol,
-          currency: q.currency || '',
-          exchange: q.fullExchangeName || q.exchange || '',
-          quoteType: q.quoteType || '',
+          marketName:    q.shortName || q.longName || symbol,
+          currency:      q.currency || '',
+          exchange:      q.fullExchangeName || q.exchange || '',
+          quoteType:     q.quoteType || '',
         }
       } catch (e) {
         console.error(`[${symbol}] 조회 실패:`, e.message)

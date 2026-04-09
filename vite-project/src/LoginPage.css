@@ -1,0 +1,112 @@
+.login-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.login-card {
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+.login-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+
+.logo-bold {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #171c29;
+  letter-spacing: -1px;
+}
+
+.logo-light {
+  font-size: 2rem;
+  font-weight: 400;
+  color: #003cff;
+  letter-spacing: -1px;
+}
+
+.login-desc {
+  font-size: 0.88rem;
+  color: #6b7684;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.login-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  background: #f8f9fc;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: #171c29;
+  text-align: left;
+}
+
+.feature-icon { font-size: 1rem; }
+
+/* 카카오 버튼 */
+.kakao-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  background: #fee500;
+  color: #191919;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.kakao-btn:hover:not(:disabled) { opacity: 0.88; }
+.kakao-btn:active { transform: scale(0.98); }
+.kakao-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.kakao-btn img { border-radius: 4px; }
+
+.login-error {
+  font-size: 0.8rem;
+  color: #d92b3a;
+  background: #fff0f1;
+  border: 1px solid #ffb3b8;
+  border-radius: 8px;
+  padding: 0.6rem 0.875rem;
+  width: 100%;
+  margin: 0;
+}
+
+.login-notice {
+  font-size: 0.75rem;
+  color: #adb5bd;
+  line-height: 1.6;
+  margin: 0;
+}

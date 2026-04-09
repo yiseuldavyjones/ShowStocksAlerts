@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 
 const THRESHOLDS = [10, 5, 3]
+const STORAGE_KEY = 'stock-alerts-stocks'
 
 const DEFAULT_STOCKS = [
   { symbol: 'AAPL', name: 'Apple' },
@@ -59,30 +60,39 @@ function fmtChange(val) {
   return `${sign}${val.toFixed(2)}%`
 }
 
+function loadStocks() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : DEFAULT_STOCKS
+  } catch {
+    return DEFAULT_STOCKS
+  }
+}
+
+function saveStocks(stockList) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stockList))
+}
+
 export default function App() {
-  const [stocks, setStocks] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('sa_stocks') || 'null') || DEFAULT_STOCKS }
-    catch { return DEFAULT_STOCKS }
-  })
+  const [stocks, setStocks]       = useState(loadStocks)
   const [priceData, setPriceData] = useState({})
-  const [alertLog, setAlertLog] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [alertLog, setAlertLog]   = useState([])
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState(null)
   const [intervalMin, setIntervalMin] = useState(5)
-  const [notifyPerm, setNotifyPerm] = useState(
+  const [notifyPerm, setNotifyPerm]   = useState(
     'Notification' in window ? Notification.permission : 'unsupported'
   )
   const alertedRef = useRef({})
 
-  // 종목 추가 – 검색/미리보기 상태
-  const [newSymbol, setNewSymbol] = useState('')
-  const [newName, setNewName] = useState('')
-  const [preview, setPreview] = useState(null)       // 검색 결과 미리보기
+  const [deleteTarget, setDeleteTarget] = useState(null)
+
+  const [newSymbol, setNewSymbol]     = useState('')
+  const [newName, setNewName]         = useState('')
+  const [preview, setPreview]         = useState(null)
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookupError, setLookupError] = useState(null)
-  const [showHelp, setShowHelp] = useState(false)
-
-  useEffect(() => { localStorage.setItem('sa_stocks', JSON.stringify(stocks)) }, [stocks])
+  const [showHelp, setShowHelp]       = useState(false)
 
   useEffect(() => {
     const now = new Date()
@@ -168,7 +178,9 @@ export default function App() {
 
   function confirmAdd() {
     if (!preview) return
-    setStocks((prev) => [...prev, { symbol: preview.symbol, name: newName.trim() || preview.marketName }])
+    const next = [...stocks, { symbol: preview.symbol, name: newName.trim() || preview.marketName }]
+    setStocks(next)
+    saveStocks(next)
     setPreview(null)
     setNewSymbol('')
     setNewName('')
@@ -183,11 +195,20 @@ export default function App() {
   }
 
   function removeStock(symbol) {
-    setStocks((prev) => prev.filter((s) => s.symbol !== symbol))
+    const stock = stocks.find((s) => s.symbol === symbol)
+    setDeleteTarget({ symbol, name: stock?.name || symbol })
+  }
+
+  function confirmDelete() {
+    const { symbol } = deleteTarget
+    const next = stocks.filter((s) => s.symbol !== symbol)
+    setStocks(next)
+    saveStocks(next)
     setPriceData((prev) => { const n = { ...prev }; delete n[symbol]; return n })
     Object.keys(alertedRef.current).forEach((k) => {
       if (k.startsWith(symbol + '_')) delete alertedRef.current[k]
     })
+    setDeleteTarget(null)
   }
 
   async function requestPermission() {
@@ -202,7 +223,6 @@ export default function App() {
 
   return (
     <div className="app">
-
       {/* ── 헤더 ── */}
       <header className="app-header">
         <div className="header-logo">
@@ -220,9 +240,6 @@ export default function App() {
               <option value={30}>30분</option>
             </select>
           </label>
-          {notifyPerm === 'default' && (
-            <button className="btn btn-outline" onClick={requestPermission}>알림 허용</button>
-          )}
           <button className="btn btn-primary" onClick={poll} disabled={loading}>
             {loading ? '조회 중…' : '새로고침'}
           </button>
@@ -230,7 +247,6 @@ export default function App() {
       </header>
 
       <div className="app-body">
-
         {/* ── 오류 배너 ── */}
         {error && (
           <div className="banner-error">
@@ -239,16 +255,17 @@ export default function App() {
           </div>
         )}
         {notifyPerm === 'denied' && (
-          <div className="banner-warn">
-            브라우저 알림이 차단되어 있습니다. 브라우저 설정에서 허용해주세요.
-          </div>
+          <div className="banner-warn">브라우저 알림이 차단되어 있습니다. 브라우저 설정에서 허용해주세요.</div>
         )}
 
         {/* ── 요약 카드 3개 ── */}
         <div className="summary-row">
           <div className="summary-card">
             <span className="sc-label">모니터링 종목</span>
-            <span className="sc-value">{stocks.length}<span className="sc-unit">개</span></span>
+            <span className="sc-value">
+              {stocks.length}
+              <span className="sc-unit">개</span>
+            </span>
             <div className="sc-bar-wrap">
               <div className="sc-bar up" style={{ flex: upCount }} />
               <div className="sc-bar down" style={{ flex: downCount }} />
@@ -274,7 +291,8 @@ export default function App() {
           <div className="summary-card">
             <span className="sc-label">오늘 알림 발생</span>
             <span className={`sc-value ${alertCount > 0 ? 'alert-active' : ''}`}>
-              {alertCount}<span className="sc-unit">건</span>
+              {alertCount}
+              <span className="sc-unit">건</span>
             </span>
             <div className="sc-sub">
               마지막 업데이트: {lastUpdated ? lastUpdated.toLocaleTimeString('ko-KR') : '-'}
@@ -286,43 +304,39 @@ export default function App() {
         <section className="section-card">
           <div className="section-header">
             <h2 className="section-title">종목 추가</h2>
-            <button
-              className="help-toggle"
-              onClick={() => setShowHelp((v) => !v)}
-            >
+            <button className="help-toggle" onClick={() => setShowHelp((v) => !v)}>
               {showHelp ? '도움말 닫기 ✕' : '? 심볼 찾는 방법'}
             </button>
           </div>
 
-          {/* 도움말 박스 */}
           {showHelp && (
             <div className="help-box">
               <p className="help-desc">
-                <a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a>에서
-                원하는 종목을 검색한 뒤 URL 또는 종목 페이지 상단에 표시된 <strong>심볼</strong>을 복사해 입력하세요.
+                <a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a>
+                에서 원하는 종목을 검색한 뒤 URL 또는 종목 페이지 상단에 표시된 <strong>심볼</strong>을 복사해 입력하세요.
               </p>
               <div className="help-grid">
                 <div className="help-row">
                   <span className="help-market">🇺🇸 미국 주식</span>
                   <div className="help-chips">
                     {['AAPL', 'MSFT', 'TSLA', 'NVDA', 'AMZN'].map((s) => (
-                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null); }}>{s}</button>
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null) }}>{s}</button>
                     ))}
                   </div>
                 </div>
                 <div className="help-row">
                   <span className="help-market">🇰🇷 한국 주식</span>
                   <div className="help-chips">
-                    {[['005930.KS','삼성전자'], ['000660.KS','SK하이닉스'], ['035420.KS','NAVER']].map(([s, n]) => (
-                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null); }} title={n}>{s}</button>
+                    {[['005930.KS', '삼성전자'], ['000660.KS', 'SK하이닉스'], ['035420.KS', 'NAVER']].map(([s, n]) => (
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null) }} title={n}>{s}</button>
                     ))}
                   </div>
                 </div>
                 <div className="help-row">
                   <span className="help-market">📊 지수</span>
                   <div className="help-chips">
-                    {[['^GSPC','S&P500'], ['^IXIC','나스닥'], ['^KS11','코스피'], ['^N225','닛케이']].map(([s, n]) => (
-                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null); }} title={n}>{s}</button>
+                    {[['^GSPC', 'S&P500'], ['^IXIC', '나스닥'], ['^KS11', '코스피'], ['^N225', '닛케이']].map(([s, n]) => (
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null) }} title={n}>{s}</button>
                     ))}
                   </div>
                 </div>
@@ -330,7 +344,7 @@ export default function App() {
                   <span className="help-market">💱 환율</span>
                   <div className="help-chips">
                     {['USDKRW=X', 'EURUSD=X', 'USDJPY=X'].map((s) => (
-                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null); }}>{s}</button>
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null) }}>{s}</button>
                     ))}
                   </div>
                 </div>
@@ -338,7 +352,6 @@ export default function App() {
             </div>
           )}
 
-          {/* 검색 폼 */}
           <div className="add-area">
             {!preview ? (
               <form className="add-form" onSubmit={lookupSymbol}>
@@ -346,29 +359,25 @@ export default function App() {
                   className="form-input"
                   placeholder="심볼 입력 (예: AAPL, 005930.KS, ^GSPC)"
                   value={newSymbol}
-                  onChange={(e) => { setNewSymbol(e.target.value); setLookupError(null); }}
+                  onChange={(e) => { setNewSymbol(e.target.value); setLookupError(null) }}
                 />
-                <button
-                  className="btn btn-primary"
-                  type="submit"
-                  disabled={lookupLoading || !newSymbol.trim()}
-                >
+                <button className="btn btn-primary" type="submit" disabled={lookupLoading || !newSymbol.trim()}>
                   {lookupLoading ? '검색 중…' : '검색'}
                 </button>
               </form>
             ) : (
-              /* 미리보기 + 확인 */
               <div className="preview-wrap">
                 <div className="preview-card">
                   <div className="preview-left">
                     <span className="preview-symbol">{preview.symbol}</span>
-                    <span className="preview-exchange">{preview.exchange}{preview.quoteType ? ` · ${preview.quoteType}` : ''}</span>
+                    <span className="preview-exchange">
+                      {preview.exchange}{preview.quoteType ? ` · ${preview.quoteType}` : ''}
+                    </span>
                   </div>
                   <div className="preview-center">
                     <span className="preview-name">{preview.marketName}</span>
                     <span className="preview-price">
-                      {fmt(preview.price)}
-                      <span className="currency"> {preview.currency}</span>
+                      {fmt(preview.price)}<span className="currency"> {preview.currency}</span>
                     </span>
                   </div>
                   <div className={`preview-pct ${preview.changePercent >= 0 ? 'up' : 'down'}`}>
@@ -376,12 +385,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className="add-form">
-                  <input
-                    className="form-input"
-                    placeholder="표시 이름 (비워두면 Yahoo 이름 사용)"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                  />
+                  <input className="form-input" placeholder="표시 이름 (비워두면 Yahoo 이름 사용)" value={newName} onChange={(e) => setNewName(e.target.value)} />
                   <button className="btn btn-primary" onClick={confirmAdd}>+ 추가</button>
                   <button className="btn btn-outline" onClick={cancelAdd}>취소</button>
                 </div>
@@ -399,9 +403,9 @@ export default function App() {
               <span className="count-badge">{stocks.length}</span>
             </h2>
             <div className="legend">
-              <span className="leg-dot low" />주의 3%+
-              <span className="leg-dot mid" />경보 5%+
-              <span className="leg-dot high" />급변 10%+
+              <span className="leg-dot low" /> 주의 3%+
+              <span className="leg-dot mid" /> 경보 5%+
+              <span className="leg-dot high" /> 급변 10%+
             </div>
           </div>
 
@@ -448,17 +452,11 @@ export default function App() {
                             </span>
                           ) : '-'}
                         </td>
-                        <td className="col-prev num muted">
-                          {q ? fmt(q.prevClose) : '-'}
-                        </td>
+                        <td className="col-prev num muted">{q ? fmt(q.prevClose) : '-'}</td>
                         <td className="col-alert">
-                          {level ? (
-                            <span className={`alert-chip ${level}`}>
-                              {abs >= 10 ? '급변' : abs >= 5 ? '경보' : '주의'}
-                            </span>
-                          ) : (
-                            <span className="muted small">-</span>
-                          )}
+                          {level
+                            ? <span className={`alert-chip ${level}`}>{abs >= 10 ? '급변' : abs >= 5 ? '경보' : '주의'}</span>
+                            : <span className="muted small">-</span>}
                         </td>
                         <td className="col-del">
                           <button className="del-btn" onClick={() => removeStock(stock.symbol)} title="삭제">×</button>
@@ -521,13 +519,33 @@ export default function App() {
             </div>
           </section>
         )}
-
       </div>
 
       <footer className="app-footer">
         <span>데이터 제공: Yahoo Finance</span>
         <span>폴링 주기 {intervalMin}분 · {lastUpdated ? lastUpdated.toLocaleTimeString('ko-KR') : '-'} 기준</span>
       </footer>
+
+      {/* ── 삭제 확인 모달 ── */}
+      {deleteTarget && (
+        <div className="modal-backdrop" onClick={() => setDeleteTarget(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-icon">🗑️</span>
+              <h3>종목 삭제</h3>
+            </div>
+            <p className="modal-body">
+              <strong>{deleteTarget.symbol}</strong>
+              {deleteTarget.name !== deleteTarget.symbol && <span className="modal-name"> ({deleteTarget.name})</span>}
+              을(를) 삭제하시겠습니까?
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-outline" onClick={() => setDeleteTarget(null)}>취소</button>
+              <button className="btn btn-danger" onClick={confirmDelete}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

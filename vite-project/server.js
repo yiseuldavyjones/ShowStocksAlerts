@@ -50,7 +50,7 @@ app.get('/api/quotes', async (req, res) => {
 
 // ── 프로덕션: SPA 라우팅 폴백 ──
 if (process.env.NODE_ENV === 'production') {
-  app.get('*', (_req, res) => {
+  app.get('/{*path}', (_req, res) => {
     res.sendFile(join(__dirname, 'dist', 'index.html'))
   })
 }

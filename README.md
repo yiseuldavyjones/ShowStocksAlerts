@@ -1,6 +1,4 @@
-================================================================
   StockAlerts — 주가 변동 모니터링 웹앱
-================================================================
 
 배포 주소: https://showstocksalerts.onrender.com
 GitHub   : https://github.com/yiseuldavyjones/ShowStocksAlerts

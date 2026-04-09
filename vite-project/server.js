@@ -23,6 +23,8 @@ app.get('/api/quotes', async (req, res) => {
           changePercent: q.regularMarketChangePercent,
           marketName: q.shortName || q.longName || symbol,
           currency: q.currency || '',
+          exchange: q.fullExchangeName || q.exchange || '',
+          quoteType: q.quoteType || '',
         }
       } catch (e) {
         console.error(`[${symbol}] 조회 실패:`, e.message)

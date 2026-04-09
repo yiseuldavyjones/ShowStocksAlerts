@@ -68,13 +68,19 @@ export default function App() {
   const [alertLog, setAlertLog] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [newSymbol, setNewSymbol] = useState('')
-  const [newName, setNewName] = useState('')
   const [intervalMin, setIntervalMin] = useState(5)
   const [notifyPerm, setNotifyPerm] = useState(
     'Notification' in window ? Notification.permission : 'unsupported'
   )
   const alertedRef = useRef({})
+
+  // 종목 추가 – 검색/미리보기 상태
+  const [newSymbol, setNewSymbol] = useState('')
+  const [newName, setNewName] = useState('')
+  const [preview, setPreview] = useState(null)       // 검색 결과 미리보기
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookupError, setLookupError] = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => { localStorage.setItem('sa_stocks', JSON.stringify(stocks)) }, [stocks])
 
@@ -132,17 +138,48 @@ export default function App() {
     return () => clearInterval(id)
   }, [poll, intervalMin])
 
-  function addStock(e) {
+  async function lookupSymbol(e) {
     e.preventDefault()
     const sym = newSymbol.trim().toUpperCase()
     if (!sym) return
     if (stocks.some((s) => s.symbol === sym)) {
-      setError(`${sym} 은(는) 이미 추가되어 있습니다`)
+      setLookupError(`"${sym}"은(는) 이미 추가된 종목입니다`)
       return
     }
-    setStocks((prev) => [...prev, { symbol: sym, name: newName.trim() }])
+    setLookupLoading(true)
+    setLookupError(null)
+    setPreview(null)
+    try {
+      const res = await fetch(`/api/quotes?symbols=${encodeURIComponent(sym)}`)
+      if (!res.ok) throw new Error('서버 오류가 발생했습니다')
+      const data = await res.json()
+      const q = data[sym]
+      if (!q || q.price == null) {
+        throw new Error(`"${sym}" 심볼을 찾을 수 없습니다. Yahoo Finance에서 심볼을 확인해주세요.`)
+      }
+      setPreview({ symbol: sym, ...q })
+      setNewName(q.marketName || sym)
+    } catch (e) {
+      setLookupError(e.message)
+    } finally {
+      setLookupLoading(false)
+    }
+  }
+
+  function confirmAdd() {
+    if (!preview) return
+    setStocks((prev) => [...prev, { symbol: preview.symbol, name: newName.trim() || preview.marketName }])
+    setPreview(null)
     setNewSymbol('')
     setNewName('')
+    setLookupError(null)
+  }
+
+  function cancelAdd() {
+    setPreview(null)
+    setNewSymbol('')
+    setNewName('')
+    setLookupError(null)
   }
 
   function removeStock(symbol) {
@@ -249,22 +286,109 @@ export default function App() {
         <section className="section-card">
           <div className="section-header">
             <h2 className="section-title">종목 추가</h2>
+            <button
+              className="help-toggle"
+              onClick={() => setShowHelp((v) => !v)}
+            >
+              {showHelp ? '도움말 닫기 ✕' : '? 심볼 찾는 방법'}
+            </button>
           </div>
-          <form className="add-form" onSubmit={addStock}>
-            <input
-              className="form-input"
-              placeholder="심볼 (예: AAPL, ^NSEI, 005930.KS)"
-              value={newSymbol}
-              onChange={(e) => setNewSymbol(e.target.value)}
-            />
-            <input
-              className="form-input"
-              placeholder="표시 이름 (선택사항)"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <button className="btn btn-primary" type="submit">+ 종목 추가</button>
-          </form>
+
+          {/* 도움말 박스 */}
+          {showHelp && (
+            <div className="help-box">
+              <p className="help-desc">
+                <a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a>에서
+                원하는 종목을 검색한 뒤 URL 또는 종목 페이지 상단에 표시된 <strong>심볼</strong>을 복사해 입력하세요.
+              </p>
+              <div className="help-grid">
+                <div className="help-row">
+                  <span className="help-market">🇺🇸 미국 주식</span>
+                  <div className="help-chips">
+                    {['AAPL', 'MSFT', 'TSLA', 'NVDA', 'AMZN'].map((s) => (
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null); }}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="help-row">
+                  <span className="help-market">🇰🇷 한국 주식</span>
+                  <div className="help-chips">
+                    {[['005930.KS','삼성전자'], ['000660.KS','SK하이닉스'], ['035420.KS','NAVER']].map(([s, n]) => (
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null); }} title={n}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="help-row">
+                  <span className="help-market">📊 지수</span>
+                  <div className="help-chips">
+                    {[['^GSPC','S&P500'], ['^IXIC','나스닥'], ['^KS11','코스피'], ['^N225','닛케이']].map(([s, n]) => (
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null); }} title={n}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="help-row">
+                  <span className="help-market">💱 환율</span>
+                  <div className="help-chips">
+                    {['USDKRW=X', 'EURUSD=X', 'USDJPY=X'].map((s) => (
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null); }}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 검색 폼 */}
+          <div className="add-area">
+            {!preview ? (
+              <form className="add-form" onSubmit={lookupSymbol}>
+                <input
+                  className="form-input"
+                  placeholder="심볼 입력 (예: AAPL, 005930.KS, ^GSPC)"
+                  value={newSymbol}
+                  onChange={(e) => { setNewSymbol(e.target.value); setLookupError(null); }}
+                />
+                <button
+                  className="btn btn-primary"
+                  type="submit"
+                  disabled={lookupLoading || !newSymbol.trim()}
+                >
+                  {lookupLoading ? '검색 중…' : '검색'}
+                </button>
+              </form>
+            ) : (
+              /* 미리보기 + 확인 */
+              <div className="preview-wrap">
+                <div className="preview-card">
+                  <div className="preview-left">
+                    <span className="preview-symbol">{preview.symbol}</span>
+                    <span className="preview-exchange">{preview.exchange}{preview.quoteType ? ` · ${preview.quoteType}` : ''}</span>
+                  </div>
+                  <div className="preview-center">
+                    <span className="preview-name">{preview.marketName}</span>
+                    <span className="preview-price">
+                      {fmt(preview.price)}
+                      <span className="currency"> {preview.currency}</span>
+                    </span>
+                  </div>
+                  <div className={`preview-pct ${preview.changePercent >= 0 ? 'up' : 'down'}`}>
+                    {preview.changePercent >= 0 ? '▲' : '▼'} {Math.abs(preview.changePercent).toFixed(2)}%
+                  </div>
+                </div>
+                <div className="add-form">
+                  <input
+                    className="form-input"
+                    placeholder="표시 이름 (비워두면 Yahoo 이름 사용)"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                  />
+                  <button className="btn btn-primary" onClick={confirmAdd}>+ 추가</button>
+                  <button className="btn btn-outline" onClick={cancelAdd}>취소</button>
+                </div>
+              </div>
+            )}
+            {lookupError && <p className="lookup-error">{lookupError}</p>}
+          </div>
         </section>
 
         {/* ── 모니터링 테이블 ── */}

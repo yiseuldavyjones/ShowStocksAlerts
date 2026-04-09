@@ -325,13 +325,6 @@ select:focus { border-color: var(--accent); }
 .leg-dot.high { background: var(--high-color); }
 
 /* ─── 종목 추가 폼 ──────────────────────────────── */
-.add-form {
-  display: flex;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  flex-wrap: wrap;
-}
-
 .form-input {
   flex: 1;
   min-width: 150px;
@@ -346,6 +339,167 @@ select:focus { border-color: var(--accent); }
 }
 .form-input:focus { border-color: var(--accent); background: #fff; }
 .form-input::placeholder { color: var(--text-muted); }
+
+/* ─── 도움말 박스 ────────────────────────────────── */
+.help-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.help-toggle:hover { background: var(--bg); color: var(--accent); border-color: var(--accent); }
+
+.help-box {
+  background: #f8f9fc;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.help-desc {
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+.help-desc a { color: var(--accent); text-decoration: underline; }
+.help-desc strong { color: var(--text); }
+
+.help-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.help-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.help-market {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+.help-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.sym-chip {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 0.75rem;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.sym-chip:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+/* ─── 추가 영역 ──────────────────────────────────── */
+.add-area {
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.add-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ─── 미리보기 카드 ──────────────────────────────── */
+.preview-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.preview-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: var(--accent-light);
+  border: 1px solid rgba(0, 60, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.875rem 1.25rem;
+  flex-wrap: wrap;
+}
+
+.preview-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 90px;
+}
+
+.preview-symbol {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.preview-exchange {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.preview-center {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+}
+
+.preview-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.preview-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.preview-pct {
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.preview-pct.up   { color: var(--up); }
+.preview-pct.down { color: var(--down); }
+
+.lookup-error {
+  font-size: 0.8rem;
+  color: var(--high-color);
+  background: var(--high-bg);
+  border: 1px solid var(--high-border);
+  border-radius: 6px;
+  padding: 0.5rem 0.875rem;
+}
 
 /* ─── 테이블 ─────────────────────────────────────── */
 .table-wrap {

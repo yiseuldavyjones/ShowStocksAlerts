@@ -104,6 +104,13 @@ body {
   gap: 0.75rem;
 }
 
+.user-name {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  border-right: 1px solid var(--border);
+  padding-right: 0.75rem;
+}
+
 .control-label {
   display: flex;
   align-items: center;

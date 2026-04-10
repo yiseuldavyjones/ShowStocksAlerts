@@ -3,8 +3,20 @@ import express from 'express'
 import YahooFinance from 'yahoo-finance2'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import admin from 'firebase-admin'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// ── Firebase Admin 초기화 ──
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId:   process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey:  process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  })
+}
 
 const yf  = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 const app = express()
@@ -46,6 +58,55 @@ app.get('/api/quotes', async (req, res) => {
   )
 
   res.json(results)
+})
+
+// ── 카카오 로그인: 인가 코드 → Firebase 커스텀 토큰 ──
+app.post('/api/auth/kakao', async (req, res) => {
+  const { code, redirectUri } = req.body
+  if (!code || !redirectUri) {
+    return res.status(400).json({ error: 'code, redirectUri 파라미터 필요' })
+  }
+
+  try {
+    // 1. 카카오 액세스 토큰 교환
+    const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+      body: new URLSearchParams({
+        grant_type:    'authorization_code',
+        client_id:     process.env.KAKAO_REST_API_KEY,
+        client_secret: process.env.KAKAO_CLIENT_SECRET,
+        redirect_uri:  redirectUri,
+        code,
+      }),
+    })
+    const tokenData = await tokenRes.json()
+    if (!tokenData.access_token) {
+      console.error('[kakao] 토큰 교환 실패:', tokenData)
+      return res.status(400).json({ error: tokenData.error_description || '카카오 인증 실패' })
+    }
+
+    // 2. 카카오 사용자 정보 조회
+    const userRes = await fetch('https://kapi.kakao.com/v2/user/me', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    })
+    const userInfo = await userRes.json()
+    if (!userInfo.id) {
+      return res.status(400).json({ error: '카카오 사용자 정보 조회 실패' })
+    }
+
+    // 3. Firebase 커스텀 토큰 발급
+    const uid      = `kakao:${userInfo.id}`
+    const nickname = userInfo.kakao_account?.profile?.nickname
+                  || userInfo.properties?.nickname
+                  || ''
+    const customToken = await admin.auth().createCustomToken(uid, { provider: 'kakao', nickname })
+
+    res.json({ customToken, nickname })
+  } catch (e) {
+    console.error('[kakao auth] 오류:', e)
+    res.status(500).json({ error: '인증 처리 중 오류가 발생했습니다' })
+  }
 })
 
 // ── 프로덕션: SPA 라우팅 폴백 ──

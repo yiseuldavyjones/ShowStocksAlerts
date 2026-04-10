@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { db, doc, getDoc, setDoc, serverTimestamp, auth, signOut } from './firebase'
 import './App.css'
 
 const THRESHOLDS = [10, 5, 3]
-const STORAGE_KEY = 'stock-alerts-stocks'
 
 const DEFAULT_STOCKS = [
   { symbol: 'AAPL', name: 'Apple' },
@@ -60,40 +60,28 @@ function fmtChange(val) {
   return `${sign}${val.toFixed(2)}%`
 }
 
-function loadStocks() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    return saved ? JSON.parse(saved) : DEFAULT_STOCKS
-  } catch {
-    return DEFAULT_STOCKS
-  }
-}
-
-function saveStocks(stockList) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(stockList))
-}
-
-export default function App() {
-  const [stocks, setStocks]       = useState(loadStocks)
-  const [priceData, setPriceData] = useState({})
-  const [alertLog, setAlertLog]   = useState([])
-  const [loading, setLoading]     = useState(false)
-  const [error, setError]         = useState(null)
-  const [intervalMin, setIntervalMin] = useState(5)
-  const [notifyPerm, setNotifyPerm]   = useState(
+export default function App({ user }) {
+  const [stocks, setStocks]             = useState([])
+  const [stocksLoaded, setStocksLoaded] = useState(false)
+  const [priceData, setPriceData]       = useState({})
+  const [alertLog, setAlertLog]         = useState([])
+  const [loading, setLoading]           = useState(false)
+  const [error, setError]               = useState(null)
+  const [intervalMin, setIntervalMin]   = useState(5)
+  const [notifyPerm, setNotifyPerm]     = useState(
     'Notification' in window ? Notification.permission : 'unsupported'
   )
   const alertedRef = useRef({})
 
-  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteTarget, setDeleteTarget]     = useState(null)
+  const [newSymbol, setNewSymbol]           = useState('')
+  const [newName, setNewName]               = useState('')
+  const [preview, setPreview]               = useState(null)
+  const [lookupLoading, setLookupLoading]   = useState(false)
+  const [lookupError, setLookupError]       = useState(null)
+  const [showHelp, setShowHelp]             = useState(false)
 
-  const [newSymbol, setNewSymbol]     = useState('')
-  const [newName, setNewName]         = useState('')
-  const [preview, setPreview]         = useState(null)
-  const [lookupLoading, setLookupLoading] = useState(false)
-  const [lookupError, setLookupError] = useState(null)
-  const [showHelp, setShowHelp]       = useState(false)
-
+  // ── 자정 알림 초기화 ──
   useEffect(() => {
     const now = new Date()
     const midnight = new Date(now)
@@ -101,6 +89,28 @@ export default function App() {
     const timer = setTimeout(() => { alertedRef.current = {} }, midnight - now)
     return () => clearTimeout(timer)
   }, [])
+
+  // ── Firestore: 종목 로드 ──
+  useEffect(() => {
+    const docRef = doc(db, 'users', user.uid)
+    getDoc(docRef)
+      .then((snap) => {
+        if (snap.exists() && Array.isArray(snap.data().stocks)) {
+          setStocks(snap.data().stocks)
+        } else {
+          setStocks(DEFAULT_STOCKS)
+        }
+      })
+      .catch(() => setStocks(DEFAULT_STOCKS))
+      .finally(() => setStocksLoaded(true))
+  }, [user.uid])
+
+  // ── Firestore: 종목 저장 ──
+  useEffect(() => {
+    if (!stocksLoaded) return
+    setDoc(doc(db, 'users', user.uid), { stocks, updatedAt: serverTimestamp() }, { merge: true })
+      .catch((e) => console.error('Firestore 저장 실패:', e))
+  }, [stocks, stocksLoaded, user.uid])
 
   const poll = useCallback(async () => {
     if (stocks.length === 0) return
@@ -180,7 +190,6 @@ export default function App() {
     if (!preview) return
     const next = [...stocks, { symbol: preview.symbol, name: newName.trim() || preview.marketName }]
     setStocks(next)
-    saveStocks(next)
     setPreview(null)
     setNewSymbol('')
     setNewName('')
@@ -203,7 +212,6 @@ export default function App() {
     const { symbol } = deleteTarget
     const next = stocks.filter((s) => s.symbol !== symbol)
     setStocks(next)
-    saveStocks(next)
     setPriceData((prev) => { const n = { ...prev }; delete n[symbol]; return n })
     Object.keys(alertedRef.current).forEach((k) => {
       if (k.startsWith(symbol + '_')) delete alertedRef.current[k]
@@ -231,6 +239,9 @@ export default function App() {
           <span className="logo-tag">주식 전일 종가 대비 알림</span>
         </div>
         <div className="header-controls">
+          {user.displayName && (
+            <span className="user-name">{user.displayName}</span>
+          )}
           <label className="control-label">
             폴링 주기
             <select value={intervalMin} onChange={(e) => setIntervalMin(Number(e.target.value))}>
@@ -242,6 +253,9 @@ export default function App() {
           </label>
           <button className="btn btn-primary" onClick={poll} disabled={loading}>
             {loading ? '조회 중…' : '새로고침'}
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={() => signOut(auth)}>
+            로그아웃
           </button>
         </div>
       </header>

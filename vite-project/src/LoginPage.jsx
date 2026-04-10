@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { auth, signInWithCustomToken } from './firebase'
+import { auth, signInWithCustomToken, updateProfile } from './firebase'
 import './LoginPage.css'
 
-const REDIRECT_URI = window.location.origin
+const REDIRECT_URI = `${window.location.origin}/auth/login/kakao`
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -36,11 +36,16 @@ export default function LoginPage() {
         body: JSON.stringify({ code, redirectUri: REDIRECT_URI }),
       })
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || '서버 오류가 발생했습니다')
+        const text = await res.text()
+        let errorMsg = '서버 오류가 발생했습니다'
+        try { errorMsg = JSON.parse(text).error || errorMsg } catch { /* HTML 404 등 */ }
+        throw new Error(errorMsg)
       }
-      const { customToken } = await res.json()
+      const { customToken, nickname } = await res.json()
       await signInWithCustomToken(auth, customToken)
+      if (nickname && auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: nickname })
+      }
     } catch (e) {
       setError(e.message)
       setLoading(false)

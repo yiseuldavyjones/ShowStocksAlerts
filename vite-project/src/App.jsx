@@ -273,7 +273,7 @@ export default function App({ user }) {
             <span className="user-name">{user.displayName}님</span>
           )}
           <label className="control-label">
-            폴링 주기
+            <span className="label-text">폴링 주기</span>
             <select
               value={isCustomInterval ? 'custom' : intervalMin}
               onChange={(e) => {
@@ -316,11 +316,11 @@ export default function App({ user }) {
               </button>
             </span>
           )}
-          <button className="btn btn-primary" onClick={poll} disabled={loading}>
-            {loading ? '조회 중…' : '새로고침'}
+          <button className="btn btn-icon" onClick={poll} disabled={loading} title="새로고침">
+            <span className={loading ? 'spin' : ''}>↻</span>
           </button>
           <button className="btn btn-outline btn-sm" onClick={handleLogout}>
-            로그아웃
+            <span className="desktop-only"> </span>로그아웃
           </button>
         </div>
       </header>

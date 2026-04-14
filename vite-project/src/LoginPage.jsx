@@ -69,22 +69,22 @@ export default function LoginPage() {
           <span className="logo-light">Alerts</span>
         </div>
         <p className="login-desc">
-          전일 종가 대비 주가 변동을 실시간으로 모니터링하고<br />
-          3% · 5% · 10% 기준 초과 시 알림을 받으세요.
+          전일 종가 대비 실시간 변동을 확인하고<br />
+        원하는 변동 시 알림을 받으세요
         </p>
 
         <div className="login-features">
           <div className="feature-item">
             <span className="feature-icon">📊</span>
-            <span>야후 파이낸스 데이터</span>
+            <span>실시간 주가 추적</span>
           </div>
           <div className="feature-item">
             <span className="feature-icon">🔔</span>
-            <span>브라우저 푸시 알림</span>
+            <span>조건 기반 푸시 알림</span>
           </div>
           <div className="feature-item">
             <span className="feature-icon">☁️</span>
-            <span>Firebase 클라우드 저장</span>
+            <span>클라우드 자동저장</span>
           </div>
         </div>
 

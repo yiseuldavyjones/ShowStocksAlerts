@@ -161,6 +161,35 @@ select:focus { border-color: var(--accent); }
 
 .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.75rem; }
 
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  border: 1px solid var(--navy);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+}
+.btn-icon:hover:not(:disabled) { background: #1b2f6e; }
+.btn-icon:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@keyframes spin {
+  from { display: inline-block; transform: rotate(0deg); }
+  to   { display: inline-block; transform: rotate(360deg); }
+}
+.spin {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
 .custom-interval-wrap {
   display: flex;
   align-items: center;
@@ -418,7 +447,7 @@ select:focus { border-color: var(--accent); }
 .help-desc a:hover { text-decoration: underline; }
 .help-desc strong { color: var(--text); }
 
-.help-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+.help-grid { display: flex; flex-direction: column; gap: 0.75rem; }
 .help-row  { display: flex; align-items: center; gap: 0.875rem; flex-wrap: wrap; }
 .help-market {
   font-size: 0.77rem;
@@ -429,13 +458,18 @@ select:focus { border-color: var(--accent); }
 }
 .help-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 
+@media (max-width: 600px) {
+  .help-row { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+  .help-market { min-width: unset; }
+}
+
 .sym-chip {
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
   font-size: 0.73rem;
-  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-family: inherit;
   font-weight: 600;
   padding: 0.2rem 0.55rem;
   cursor: pointer;
@@ -650,18 +684,39 @@ th.col-alert, td.col-alert { text-align: center; }
 
 /* ─── 반응형 ─────────────────────────────────────── */
 @media (max-width: 768px) {
-  .app-header { padding: 0 1rem; }
+  .app-header {
+    padding: 0.5rem 1rem;
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .header-logo { gap: 0.15rem; }
+  .logo-bold, .logo-light { font-size: 1rem; }
   .logo-tag { display: none; }
+  .header-controls { gap: 0.4rem; }
+  .user-name { display: none; }
+  .label-text { display: none; }
+
   .app-body { padding: 1rem 0.75rem; }
-  .summary-row { grid-template-columns: 1fr; }
+  .summary-row { grid-template-columns: 1fr 1fr; }
+  .summary-row .summary-card:last-child { grid-column: 1 / -1; }
   .section-header { padding: 0.875rem 1rem 0.65rem; }
   .add-area { padding: 0.875rem 1rem; }
-  .stock-table th, .stock-table td { padding: 0.65rem 0.75rem; }
+  .stock-table th, .stock-table td { padding: 0.65rem 0.6rem; }
   .col-prev { display: none; }
+
+  select { font-size: 0.75rem; padding: 0.3rem 0.4rem; }
+  .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.73rem; }
 }
 
 @media (max-width: 480px) {
+  .app-header { padding: 0.4rem 0.75rem; }
+  .logo-bold, .logo-light { font-size: 0.9rem; }
+  .header-controls { gap: 0.3rem; }
+  .desktop-only { display: none; }
   .col-change { display: none; }
-  .summary-row { grid-template-columns: 1fr 1fr; }
-  .summary-row .summary-card:last-child { grid-column: 1 / -1; }
+  .col-alert { display: none; }
+  .custom-interval-wrap { gap: 0.2rem; }
+  .custom-interval-input { width: 44px; }
 }

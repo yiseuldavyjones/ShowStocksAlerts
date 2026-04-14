@@ -161,6 +161,25 @@ select:focus { border-color: var(--accent); }
 
 .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.75rem; }
 
+.custom-interval-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.custom-interval-input {
+  width: 52px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  text-align: center;
+}
+.custom-interval-input:focus { border-color: var(--accent); }
+.custom-interval-unit { font-size: 0.8rem; color: var(--text-sub); }
+
 .btn-danger {
   background: var(--high-color);
   color: #fff;

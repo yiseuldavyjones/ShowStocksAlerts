@@ -4,6 +4,25 @@ import './App.css'
 
 const THRESHOLDS = [10, 5, 3]
 
+// 한국 주식 한국어 이름 매핑 (Yahoo Finance는 영어명만 제공)
+const KR_NAMES = {
+  '005930.KS': '삼성전자',   '000660.KS': 'SK하이닉스',  '035420.KS': 'NAVER',
+  '005380.KS': '현대차',     '000270.KS': '기아',         '051910.KS': 'LG화학',
+  '006400.KS': '삼성SDI',    '035720.KS': '카카오',       '003550.KS': 'LG',
+  '028260.KS': '삼성물산',   '096770.KS': 'SK이노베이션', '017670.KS': 'SK텔레콤',
+  '030200.KS': 'KT',         '086790.KS': '하나금융지주', '055550.KS': '신한지주',
+  '105560.KS': 'KB금융',     '032830.KS': '삼성생명',     '012330.KS': '현대모비스',
+  '207940.KS': '삼성바이오로직스', '068270.KS': '셀트리온', '036570.KS': 'NCsoft',
+  '251270.KS': '넷마블',     '352820.KS': '하이브',       '259960.KS': '크래프톤',
+  '011200.KS': 'HMM',        '000810.KS': '삼성화재',     '018880.KS': '한온시스템',
+  '009150.KS': '삼성전기',   '011070.KS': 'LG이노텍',     '066570.KS': 'LG전자',
+  // 코스닥
+  '247540.KQ': '에코프로비엠', '086520.KQ': '에코프로',   '373220.KQ': 'LG에너지솔루션',
+  '196170.KQ': '알테오젠',   '091990.KQ': '셀트리온헬스케어',
+  // 지수
+  '^KS11': '코스피',         '^KQ11': '코스닥',
+}
+
 const DEFAULT_STOCKS = [
   { symbol: 'AAPL', name: 'Apple' },
   { symbol: 'MSFT', name: 'Microsoft' },
@@ -67,7 +86,9 @@ export default function App({ user }) {
   const [alertLog, setAlertLog]         = useState([])
   const [loading, setLoading]           = useState(false)
   const [error, setError]               = useState(null)
-  const [intervalMin, setIntervalMin]   = useState(5)
+  const [intervalMin, setIntervalMin]       = useState(5)
+  const [isCustomInterval, setIsCustomInterval] = useState(false)
+  const [customIntervalInput, setCustomIntervalInput] = useState('')
   const [notifyPerm, setNotifyPerm]     = useState(
     'Notification' in window ? Notification.permission : 'unsupported'
   )
@@ -178,7 +199,7 @@ export default function App({ user }) {
         throw new Error(`"${sym}" 심볼을 찾을 수 없습니다. Yahoo Finance에서 심볼을 확인해주세요.`)
       }
       setPreview({ symbol: sym, ...q })
-      setNewName(q.marketName || sym)
+      setNewName(KR_NAMES[sym] || q.marketName || sym)
     } catch (e) {
       setLookupError(e.message)
     } finally {
@@ -219,6 +240,15 @@ export default function App({ user }) {
     setDeleteTarget(null)
   }
 
+  async function handleLogout() {
+    try {
+      if (window.Kakao?.Auth?.getAccessToken()) {
+        await new Promise((resolve) => window.Kakao.Auth.logout(resolve))
+      }
+    } catch (_) {}
+    signOut(auth)
+  }
+
   async function requestPermission() {
     const perm = await Notification.requestPermission()
     setNotifyPerm(perm)
@@ -240,21 +270,56 @@ export default function App({ user }) {
         </div>
         <div className="header-controls">
           {user.displayName && (
-            <span className="user-name">{user.displayName}</span>
+            <span className="user-name">{user.displayName}님</span>
           )}
           <label className="control-label">
             폴링 주기
-            <select value={intervalMin} onChange={(e) => setIntervalMin(Number(e.target.value))}>
+            <select
+              value={isCustomInterval ? 'custom' : intervalMin}
+              onChange={(e) => {
+                if (e.target.value === 'custom') {
+                  setIsCustomInterval(true)
+                  setCustomIntervalInput(String(intervalMin))
+                } else {
+                  setIsCustomInterval(false)
+                  setIntervalMin(Number(e.target.value))
+                }
+              }}
+            >
               <option value={1}>1분</option>
               <option value={5}>5분</option>
               <option value={10}>10분</option>
               <option value={30}>30분</option>
+              <option value="custom">직접 입력</option>
             </select>
           </label>
+          {isCustomInterval && (
+            <span className="custom-interval-wrap">
+              <input
+                className="custom-interval-input"
+                type="number"
+                min={1}
+                max={1440}
+                value={customIntervalInput}
+                onChange={(e) => setCustomIntervalInput(e.target.value)}
+                placeholder="분"
+              />
+              <span className="custom-interval-unit">분</span>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  const val = parseInt(customIntervalInput, 10)
+                  if (val >= 1) setIntervalMin(val)
+                }}
+              >
+                설정
+              </button>
+            </span>
+          )}
           <button className="btn btn-primary" onClick={poll} disabled={loading}>
             {loading ? '조회 중…' : '새로고침'}
           </button>
-          <button className="btn btn-outline btn-sm" onClick={() => signOut(auth)}>
+          <button className="btn btn-outline btn-sm" onClick={handleLogout}>
             로그아웃
           </button>
         </div>
@@ -342,7 +407,7 @@ export default function App({ user }) {
                   <span className="help-market">🇰🇷 한국 주식</span>
                   <div className="help-chips">
                     {[['005930.KS', '삼성전자'], ['000660.KS', 'SK하이닉스'], ['035420.KS', 'NAVER']].map(([s, n]) => (
-                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null) }} title={n}>{s}</button>
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setNewName(n); setPreview(null); setLookupError(null) }} title={n}>{n}</button>
                     ))}
                   </div>
                 </div>
@@ -350,7 +415,7 @@ export default function App({ user }) {
                   <span className="help-market">📊 지수</span>
                   <div className="help-chips">
                     {[['^GSPC', 'S&P500'], ['^IXIC', '나스닥'], ['^KS11', '코스피'], ['^N225', '닛케이']].map(([s, n]) => (
-                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setPreview(null); setLookupError(null) }} title={n}>{s}</button>
+                      <button key={s} className="sym-chip" onClick={() => { setNewSymbol(s); setNewName(n); setPreview(null); setLookupError(null) }} title={s}>{n}</button>
                     ))}
                   </div>
                 </div>
@@ -449,8 +514,8 @@ export default function App({ user }) {
                     return (
                       <tr key={stock.symbol} className={`stock-row ${level ? `row-${level}` : ''}`}>
                         <td className="col-symbol">
-                          <span className="sym-text">{stock.symbol}</span>
-                          <span className="sym-name">{stock.name || q?.marketName || ''}</span>
+                          <span className="sym-text">{stock.name || q?.marketName || stock.symbol}</span>
+                          <span className="sym-name">{stock.symbol}</span>
                         </td>
                         <td className="col-price num">
                           {q ? fmt(q.price) : <span className="muted">{loading ? '…' : '-'}</span>}

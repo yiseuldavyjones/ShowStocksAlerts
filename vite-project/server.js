@@ -7,14 +7,22 @@ import admin from 'firebase-admin'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// ── Firebase Admin 초기화 ──
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId:   process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey:  process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
+// ── Firebase Admin 초기화 (지연) ──
+function getAdminApp() {
+  if (admin.apps.length) return admin.apps[0]
+
+  const projectId   = process.env.FIREBASE_PROJECT_ID
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
+  const privateKey  = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+
+  if (!projectId || !clientEmail || !privateKey) {
+    const missing = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY']
+      .filter((k) => !process.env[k])
+    throw new Error(`Firebase 환경변수 누락: ${missing.join(', ')}`)
+  }
+
+  return admin.initializeApp({
+    credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
   })
 }
 
@@ -100,7 +108,7 @@ app.post('/api/auth/kakao', async (req, res) => {
     const nickname = userInfo.kakao_account?.profile?.nickname
                   || userInfo.properties?.nickname
                   || ''
-    const customToken = await admin.auth().createCustomToken(uid, { provider: 'kakao', nickname })
+    const customToken = await getAdminApp().auth().createCustomToken(uid, { provider: 'kakao', nickname })
 
     res.json({ customToken, nickname })
   } catch (e) {
